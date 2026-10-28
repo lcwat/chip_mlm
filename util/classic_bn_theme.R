@@ -24,7 +24,7 @@ classic_bn_theme <- function() {
       panel.border = element_rect(fill = 'white', color = NA), 
       strip.background = element_rect(fill = 'white', color = NA),
       panel.grid = element_blank(),
-      text = element_text(family = 'Times New Roman', size = 8), 
-      title = element_text(face = 'bold', size = 10)
+      text = element_text(family = 'Times New Roman', size = 10), 
+      title = element_text(face = 'bold', size = 12)
     )
 }

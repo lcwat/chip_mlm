@@ -90,6 +90,10 @@ agg_d2 <- agg_d2 |>
 contrasts(agg_d2$response_type) <- contr.sum(n_distinct(agg_d2$response_type))
 contrasts(agg_d2$sex) <- contr.sum(n_distinct(agg_d2$sex))
 
+# write to csv
+write_csv(agg_d1, 'data/model_1_data.csv')
+write_csv(agg_d2, 'data/model_2_data.csv')
+
 # take a look
 summary(agg_d1)
 summary(agg_d2)
