@@ -162,7 +162,8 @@ b_final1 <- brm(
   formula = bf(
     count ~ response_type * sex * c_trial * c_drug + (1 | cohort) + # this is the count model
       (c_trial * response_type | rat_id),                 
-    hu ~ response_type * sex * c_trial * c_drug                     # this is the hurdle model
+    hu ~ response_type * sex * c_trial * c_drug + (1 | cohort) +    # this is the hurdle model
+      (c_trial * response_type | rat_id)                     
   ), 
   data = agg_d1, 
   family = hurdle_negbinomial(),
@@ -190,7 +191,8 @@ b_final2 <- brm(
   formula = bf(
     count ~ response_type * sex * c_trial * c_drug + (1 | cohort) + # this is the count model
       (c_trial * response_type | rat_id),                 
-    hu ~ response_type * sex * c_trial * c_drug                     # this is the hurdle model
+    hu ~ response_type * sex * c_trial * c_drug + (1 | cohort) +    # this is the hurdle model
+      (c_trial * response_type | rat_id)                     
   ), 
   data = agg_d2, 
   family = hurdle_negbinomial(),

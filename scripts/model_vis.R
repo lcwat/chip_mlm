@@ -43,27 +43,84 @@ plot(b2_model)
 # get a numerical summary of the model parameters
 summary_table1 <- draws1 |> 
   summarise_draws() |> 
+  filter(str_detect(variable, 'b_')) |> 
   mutate(
     across(mean:rhat, \(x) round(x, 2))
   ) |> 
+  mutate(
+    model = if_else(str_detect(variable, '_hu_'), 'hurdle', 'count'), 
+    clean_term = variable |> 
+      str_replace_all('^b_|\\d+|c_|hu_', '') |> 
+      str_replace_all('_', ' ') |> 
+      str_replace_all(':', ' x ')
+  ) |> 
+  mutate(
+    term_level = str_count(clean_term, ' x ')
+  ) |> 
+  arrange(model, term_level)
+
+# separate hurdle and count and arrange into markdown table
+summary_table_hurdle1 <- summary_table1 |> 
+  filter(model == 'hurdle') |> 
+  select(mean:ess_tail, clean_term) |> 
+  relocate(clean_term) |> 
   knitr::kable(
-    format = 'markdown', 
+    format = 'markdown',
     col.names = c('Parameter', 'Mean', 'Median', 'SD', 'MAD', 'Lower C.I.', 'Upper C.I.', 'Rhat', 'Bulk ESS', 'Tail ESS')
   )
 
+summary_table_count1 <- summary_table_clean |> 
+  filter(model == 'count') |> 
+  select(mean:ess_tail, clean_term) |> 
+  relocate(clean_term) |> 
+  knitr::kable(
+    format = 'markdown',
+    col.names = c('Parameter', 'Mean', 'Median', 'SD', 'MAD', 'Lower C.I.', 'Upper C.I.', 'Rhat', 'Bulk ESS', 'Tail ESS')
+  )
+
+# get a numerical summary of the model parameters for second experiment
 summary_table2 <- draws2 |> 
   summarise_draws() |> 
+  filter(str_detect(variable, 'b_')) |> 
   mutate(
     across(mean:rhat, \(x) round(x, 2))
   ) |> 
+  mutate(
+    model = if_else(str_detect(variable, '_hu_'), 'hurdle', 'count'), 
+    clean_term = variable |> 
+      str_replace_all('^b_|\\d+|c_|hu_', '') |> 
+      str_replace_all('_', ' ') |> 
+      str_replace_all(':', ' x ')
+  ) |> 
+  mutate(
+    term_level = str_count(clean_term, ' x ')
+  ) |> 
+  arrange(model, term_level)
+
+# separate hurdle and count and arrange into markdown table
+summary_table_hurdle2 <- summary_table2 |> 
+  filter(model == 'hurdle') |> 
+  select(mean:ess_tail, clean_term) |> 
+  relocate(clean_term) |> 
   knitr::kable(
-    format = 'markdown', 
+    format = 'markdown',
+    col.names = c('Parameter', 'Mean', 'Median', 'SD', 'MAD', 'Lower C.I.', 'Upper C.I.', 'Rhat', 'Bulk ESS', 'Tail ESS')
+  )
+
+summary_table_count2 <- summary_table_clean |> 
+  filter(model == 'count') |> 
+  select(mean:ess_tail, clean_term) |> 
+  relocate(clean_term) |> 
+  knitr::kable(
+    format = 'markdown',
     col.names = c('Parameter', 'Mean', 'Median', 'SD', 'MAD', 'Lower C.I.', 'Upper C.I.', 'Rhat', 'Bulk ESS', 'Tail ESS')
   )
 
 # kable tables for markdown report
-write_lines(summary_table1, 'tables/b1_full_table.md')
-write_lines(summary_table2, 'tables/b2_full_table.md')
+write_lines(summary_table_hurdle1, 'tables/b1_hurdle_table.md')
+write_lines(summary_table_hurdle2, 'tables/b2_hurdle_table.md')
+write_lines(summary_table_count1, 'tables/b1_count_table.md')
+write_lines(summary_table_count2, 'tables/b2_count_table.md')
 
 # plot out halfeyes for easy visual
 b_halfeyes <- draws2 |> 
@@ -105,12 +162,23 @@ ggsave(plot = sd_halfeyes, filename = 'fig_output/sd2_halfeyes.png', device = 'p
 # clean up model data
 plot_b1_data <- b1_data |> 
   mutate(
-    response_type = factor(if_else(response_type == 'entries', 'Head entry', 'Lever press'))
+    response_type = factor(if_else(response_type == 'entries', 'Head entry', 'Lever press')), 
+    drug_label = factor(
+      c_drug, 
+      levels = sort(unique(c_drug)), 
+      labels = c('Saline', str_c(sort(unique(drug))[-1], ' mg/L'))
+    )
   )
+
 plot_b2_data <- b2_data |> 
   mutate(
     sex = factor(if_else(sex == 'M', 'Male', 'Female')),
-    response_type = factor(if_else(response_type == 'entries', 'Head entry', 'Lever press'))
+    response_type = factor(if_else(response_type == 'entries', 'Head entry', 'Lever press')), 
+    drug_label = factor(
+      c_drug, 
+      levels = sort(unique(c_drug)), 
+      labels = c('Saline', str_c(sort(unique(drug))[-1], ' mg/L'))
+    )
   )
 
 # response type, sex, trial
@@ -155,6 +223,44 @@ ggsave('fig_output/b2_resp_trial_sex_ixn_w_data.png', device = 'png', width = 8,
 
 # model 1
 # trial x drug
+preds <- b1_model |> 
+  predictions(
+    newdata = datagrid(
+      c_drug = unique, 
+      c_trial = seq(min(b1_data$c_trial), max(b1_data$c_trial), length.out = 10)
+    ), 
+    re_formula = NA # exclude uncertainty from REs?
+  ) |> 
+  posterior_draws() |> 
+  mutate(
+    drug_label = factor(
+      c_drug, 
+      levels = sort(unique(c_drug)), 
+      labels = c('Saline', str_c(sort(unique(plot_b1_data$drug))[-1], ' mg/L'))
+    )
+  )
+
+preds |> 
+  ggplot(aes(x = c_trial, y = draw)) + 
+  geom_point(
+    data = plot_b1_data, 
+    aes(x = c_trial, y = count), 
+    alpha = .1, 
+    shape = 1
+  ) +
+  stat_lineribbon(point_interval = 'median_hdi', alpha = .7) + 
+  scale_fill_manual('Density interval', values = c('grey95', 'grey80', 'grey40')) + 
+  scale_x_continuous(
+    'Trial', 
+    breaks = seq(min(plot_b2_data$c_trial), max(plot_b2_data$c_trial), length.out = 10), 
+    labels = round(seq(0, 96, length.out = 10), -1)
+  ) + 
+  labs(
+    x = 'Trial', 
+    y = '# Responses'
+  ) + 
+  classic_bn_theme() +
+  facet_wrap(~drug_label)
 
 # response type x drug
 

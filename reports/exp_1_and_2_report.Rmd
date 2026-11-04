@@ -1,0 +1,48 @@
+---
+title: "Autoshaping models summary"
+author: "Lucas Watson"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Model breakdown
+
+To assess how drug dose, sex, and response types varied over the course of an autoshaping procedure, we constructed a Bayesian *hurdle negative binomial* model. This model captures both the likelihood of making a particular response on a given trial (*P(Response)*, like a logistic model) and the likelihood of making *x* number of responses on that trial, given a response was made (*P(Number of responses)*, like a Poisson model).
+
+## Details and specifications
+
+### Outcome
+
+Left and right lever/head magazine entries were aggregated within trials to create total sums of lever presses and head entries during the trial period. The outcome is therefore the **integer count of responses** during the trial.
+
+### Predictors
+
+Models were fit as full factorial models with the following predictor variables:
+
+- **Response type** (categorical): whether response being counted is head entry or lever press
+
+- **Drug** (continuous): dose in mg/L of methamphetamine
+
+- **Trial** (continuous): trial of autoshaping procedure across all sessions/days
+
+- **Sex** (categorical): whether individual was male or female
+
+Drug was standardized on the grand mean, and Trial was standardized on individual-level means. Response type and Sex were effect coded.
+
+### Random effects
+
+To account for individuals and potentially cohorts/litters selectively performing particular strategies (e.g., sign-tracking and goal-tracking), we allowed **individual and cohort level responses to vary** across response type and trial (along with their interaction). This is the maximal random effects structure for this model.
+
+### Priors
+
+All fixed effect weights (for both the hurdle and count portions of the model) were estimated with weakly informed priors (*Normal*(0, 3)) and random effect variances were estimated with weakly regularizing priors (*Exponential*(1)).
+
+### Sampling
+
+Models were fit with the `brms` package using the `cmdstanr` HMC engine. Parameter posteriors were estimated with 12,000 samples (4,000 burn-in) across 4 chains. Chains demonstrated **acceptable convergence**, verified with a visual analysis and supported by all parameters having Rhat values below 1.01.
+
+## Results
