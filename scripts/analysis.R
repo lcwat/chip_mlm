@@ -178,10 +178,12 @@ b_final1 <- brm(
   # control pars for HMC
   chains = 4, cores = 4,
   backend = 'cmdstanr',
-  iter = 3000, warmup = 1000, 
+  threads = threading(2),
+  iter = 2000, warmup = 500, 
+  stanc_options = list('O1'),
+  normalize = FALSE,
   control = list(adapt_delta = .95), 
-  seed = 10262026,
-  init = 0, 
+  seed = 11042026,
   file = 'fits/b1_final.rds'
 )
 
@@ -207,10 +209,12 @@ b_final2 <- brm(
   # control pars for HMC
   chains = 4, cores = 4,
   backend = 'cmdstanr',
-  iter = 3000, warmup = 1000, 
+  threads = threading(2),
+  iter = 2000, warmup = 500, 
+  stanc_options = list('O1'),
+  normalize = FALSE,
   control = list(adapt_delta = .95), 
-  seed = 10262026,
-  init = 0, 
+  seed = 11042026,
   file = 'fits/b2_final.rds'
 )
 
