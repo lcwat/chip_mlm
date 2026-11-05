@@ -135,8 +135,8 @@ testZeroInflation(resid)
 # and zero-inflation
 m_tmb <- glmmTMB(
   formula = count ~ response_type * sex * c_drug * c_trial + (c_trial * response_type | rat_id) + (1 | cohort), 
-  ziformula = ~ response_type * sex * c_drug * c_trial, 
-  data = agg_d, 
+  ziformula = ~ response_type * sex * c_drug * c_trial + (c_trial * response_type | rat_id) + (1 | cohort), 
+  data = agg_d2, 
   family = truncated_nbinom2
 )
 
@@ -170,9 +170,10 @@ b_final1 <- brm(
   
   # priors
   prior = c(
-    prior(normal(0, 3), class = 'b'),              # for count/neg-binom model FEs
-    prior(normal(0, 3), class = 'b', dpar = 'hu'), # for hurdle model
-    prior(exponential(1), class = 'sd')            # for count model RE variances
+    prior(normal(0, 3), class = 'b'),                # for count/neg-binom model FEs
+    prior(normal(0, 3), class = 'b', dpar = 'hu'),   # for hurdle model
+    prior(exponential(1), class = 'sd'),
+    prior(exponential(1), class = 'sd', dpar = 'hu') # for hurdle model
   ),
   
   # control pars for HMC
@@ -180,12 +181,12 @@ b_final1 <- brm(
   backend = 'cmdstanr',
   threads = threading(2),
   iter = 2000, warmup = 500, 
-  stanc_options = list('O1'),
+  refresh = 1,
   normalize = FALSE,
   control = list(adapt_delta = .95), 
   seed = 11042026,
-  file = 'fits/b1_final.rds'
-)
+  file = 'fits/b1_full_final.rds'
+)  
 
 # model will need weakly informed priors for FEs, weakly regularizing for REs
 b_final2 <- brm(
@@ -201,20 +202,19 @@ b_final2 <- brm(
   
   # priors
   prior = c(
-    prior(normal(0, 3), class = 'b'),              # for count/neg-binom model FEs
-    prior(normal(0, 3), class = 'b', dpar = 'hu'), # for hurdle model
-    prior(exponential(1), class = 'sd')            # for count model RE variances
+    prior(normal(0, 3), class = 'b'),                # for count/neg-binom model FEs
+    prior(normal(0, 3), class = 'b', dpar = 'hu'),   # for hurdle model
+    prior(exponential(1), class = 'sd'),
+    prior(exponential(1), class = 'sd', dpar = 'hu') # for hurdle model
   ),
   
   # control pars for HMC
   chains = 4, cores = 4,
   backend = 'cmdstanr',
   threads = threading(2),
-  iter = 2000, warmup = 500, 
-  stanc_options = list('O1'),
+  iter = 2000, warmup = 500,
   normalize = FALSE,
   control = list(adapt_delta = .95), 
   seed = 11042026,
-  file = 'fits/b2_final.rds'
+  file = 'fits/b2_full_final.rds'
 )
-
